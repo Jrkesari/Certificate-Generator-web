@@ -6,7 +6,7 @@ from docx2pdf import convert
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key_here'  # Set a secret key for session management
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'default_secret_key')  # Set a secret key for session management
 
 # Directories for file handling
 UPLOAD_FOLDER = 'uploads/'
@@ -44,11 +44,11 @@ def upload_files():
     
     df = pd.read_excel(excel_path)
     
+    output_files = []
     for index, row in df.iterrows():
         doc = Document(template_path)
         for paragraph in doc.paragraphs:
             for run in paragraph.runs:
-                # Example: replace {{ Name }} with actual name
                 if '{{ Name }}' in run.text:
                     run.text = run.text.replace('{{ Name }}', str(row.get('Name', '')))
                     run.bold = True
@@ -61,15 +61,18 @@ def upload_files():
             doc.save(docx_path)
             convert(docx_path, pdf_path)
             os.remove(docx_path)
-            return send_file(pdf_path, as_attachment=True)
+            output_files.append(pdf_path)
         else:
             doc.save(docx_path)
-            return send_file(docx_path, as_attachment=True)
-    
+            output_files.append(docx_path)
+
+    # Return the last generated file
+    if output_files:
+        return send_file(output_files[-1], as_attachment=True)
+
     flash('Certificates generated successfully!', 'success')
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
     port = int(os.environ.get('PORT', 5000))  # Get the PORT environment variable, default to 5000
     app.run(host='0.0.0.0', port=port)
