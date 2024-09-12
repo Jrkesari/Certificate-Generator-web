@@ -112,7 +112,7 @@ python mass_email_sender.py --csv recipients.csv --subject "Your Certificate" --
 Run the GUI by executing:
 
 ```bash
-python email_sender_gui.py
+python main.py
 ```
 
 ## How to Use
